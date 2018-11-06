@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Welcome to Vue</title>
+  <script src="https://unpkg.com/vue"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <h1>{{val}}</h1>
+    <custom-component></custom-component>
+    <my-component v-for="i in 10" :key="i" :val="i"></my-component>
+  </div>
+  <script>
+    // local component declaration
+    const customComponent = {
+      data: function () {
+        return { count: 0 }
+      },
+      template: '<button>🔘</button>'
+    }
+
+    // global component declaration
+    Vue.component('my-component', {
+      props: ['val'],
+      template: '<strong>{{val}}🔥</strong>'
+    })
+
+    const vm = new Vue({
+      el: '#app',
+      data: {
+        val: 2
+      },
+      components: {
+        'custom-component': customComponent
+      }
+    })
+  </script>
+</body>
+
+</html>

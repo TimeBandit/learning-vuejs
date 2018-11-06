@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Welcome to Vue</title>
+  <script src="https://unpkg.com/vue"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    * {
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    th {
+      padding: 5px 10px;
+      text-align: center;
+      background-color: antiquewhite;
+
+    }
+
+    [v-cloak] {
+      display: none;
+    }
+
+    .highlight {
+      border: solid 3px red;
+      color: red
+    }
+
+    .shooting-star-leave-to,
+    .shooting-star-enter {
+      transform: translateX(150px) rotate(30deg);
+      opacity: 0;
+    }
+
+    .shooting-star-enter-active,
+    .shooting-star-leave-active {
+      transition: all .5s ease;
+    }
+
+    .neo-list-leave-to,
+    .neo-list-enter {
+      opacity: 0;
+      transform: translateX(100vw);
+    }
+
+    .neo-list-enter-active,
+    .neo-list-leave-active {
+      transition: all 0.4s linear;
+    }
+
+    .spin-enter-active {
+      animation: spin-steps 2s;
+    }
+
+    @keyframes spin-steps {
+      0% {
+        transform: scale(1) rotate(0)
+      }
+
+      50% {
+        transform: scale(10) rotate(360deg)
+      }
+
+      100% {
+        transform: scale(1) rotate(1080deg)
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <h2>
+      Near Earth
+      <transition name="spin" appear>
+        <span style="display:inline-block">Objects</span>
+      </transition>
+    </h2>
+    <transition name="shooting-star">
+      <h3 v-cloak v-if="asteroids.length > 0 && showSummary">
+        <p>{{numTasks}}</p>
+        <p v-if="closestObject">
+          {{closestObject.name}} is the closest NEO at {{closestObject.distance}} miles
+        </p>
+      </h3>
+    </transition>
+    <a href="#" @click="showSummary=!showSummary">
+      Show/Hide Summary
+    </a>
+    <table>
+      <thead>
+        <th>#</th>
+        <th>Name</th>
+        <th>Close Approach Date</th>
+        <th>Miss Distance</th>
+        <th>Dangerous</th>
+        <th>Remove</th>
+      </thead>
+      <tbody is="transition-group" name="neo-list" tag="tbody" v-cloak>
+        <tr v-for="(a, index) in asteroids" :key="a.neo_reference_id" :style="getRowStyle(a)">
+          <td>{{index+1}}</td>
+          <td>{{a.name}}</td>
+          <td>{{getCloseApproachDate(a)}}</td>
+          <td>
+            <ul v-if="a.close_approach_data.length">
+              <li v-for="(value, key) in a.close_approach_data[0].miss_distance">
+                {{key}}: {{value}}
+              </li>
+            </ul>
+          </td>
+          <td>
+            <span v-if="a.is_potentially_hazardous_asteroid">😟</span>
+          </td>
+          <td>
+            <button @click="remove(index)">Remove</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <script>
+    const API_KEY = "bhiv1iPlt15yjNSUfn8e8cI12sKBo0udFjVPMQTY";
+    const url = "https://api.nasa.gov/planetary/apod?api_key=" + API_KEY;
+    const neoUrl = "https://api.nasa.gov/neo/rest/v1/neo/browse?api_key=" + API_KEY;
+
+    const vm = new Vue({
+      el: "#app",
+      data: {
+        asteroids: [],
+        showSummary: true
+      },
+      created() {
+        this.fetchAsteroids();
+      },
+      methods: {
+        fetchAsteroids: function fetchApod() {
+          axios.get(neoUrl)
+            .then(res => {
+              this.asteroids = res.data.near_earth_objects.slice(0, 10);
+            })
+        },
+        getCloseApproachDate(a) {
+          let date = '';
+          if (a.close_approach_data.length) {
+            date = a.close_approach_data[0].close_approach_date;
+          };
+          return date;
+        },
+        remove(index) {
+          this.asteroids.splice(index, 1);
+
+        },
+        getRowStyle(a) {
+          if (a.close_approach_data.length === 0) {
+            return { color: 'red' }
+          }
+        }
+      },
+      computed: {
+        numTasks: function () {
+          return this.asteroids.length
+        },
+        closestObject: function () {
+          // filter for the asteroids with close approach data
+          const hasNeoData = this.asteroids.filter(asteroid => {
+            return asteroid.close_approach_data.length > 0
+          })
+          // create a new dataset with only the name and the miss distance
+          const minNeoData = hasNeoData.map(asteroid => {
+            return {
+              name: asteroid.name,
+              distance: asteroid.close_approach_data[0].miss_distance.miles
+            }
+          })
+          // sort that list
+          const sortedNeoData = minNeoData.sort((a, b) => {
+            return a.distance - b.distance;
+          })
+          // return first element
+          return sortedNeoData[0]
+
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>
