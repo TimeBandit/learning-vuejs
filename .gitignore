@@ -2,6 +2,7 @@
 node_modules
 /dist
 /asteroids/node_modules
+/my-asteroids/node_modules
 
 # local env files
 .env.local
